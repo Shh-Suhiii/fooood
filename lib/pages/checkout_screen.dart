@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class CheckoutScreen extends StatefulWidget {
   final List<Map<String, dynamic>> selectedItems;
@@ -12,21 +14,54 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   String _selectedPayment = 'Google Pay';
 
-  void _showConfirmationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text('Order Confirmed'),
-        content: const Text('Your food is being prepared and will arrive shortly.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
-            child: const Text('OK', style: TextStyle(color: Colors.deepOrange)),
+  void _showConfirmationDialog(BuildContext context) async {
+    final url = Uri.parse('http://localhost:5002/add-order');
+    final orderData = {
+      'items': widget.selectedItems.map((item) => {
+        'name': item['name'],
+        'price': item['price'],
+        'quantity': item['quantity'],
+      }).toList(),
+      'paymentMethod': _selectedPayment,
+      'address': '123 Food Street, City Center, Mumbai, India',
+      'date': DateTime.now().toIso8601String(),
+      'status': 'Confirmed',
+      'total': widget.selectedItems.fold<int>(0, (sum, item) {
+            return sum + (item['price'] as int) * (item['quantity'] as int);
+          }) + 30 + 50
+    };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(orderData),
+      );
+      if (response.statusCode == 200) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            title: const Text('Order Confirmed'),
+            content: const Text('Your food is being prepared and will arrive shortly.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+                child: const Text('OK', style: TextStyle(color: Colors.deepOrange)),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save order.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
   }
 
   @override

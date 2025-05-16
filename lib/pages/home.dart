@@ -11,6 +11,7 @@ import 'package:flutterdelivery1/pages/settings/settings.dart';
 import 'package:flutterdelivery1/pages/wallet.dart';
 import 'shopping_cart.dart';
 import 'notification_screen.dart';
+import 'package:flutterdelivery1/pages/order_history.dart';
 import 'package:flutterdelivery1/pages/categories/desserts_screen.dart';
 import 'package:flutterdelivery1/pages/order.dart';
 
@@ -364,6 +365,15 @@ class _HomeContentState extends State<HomeContent> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const NotificationScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Iconsax.document_text, color: Colors.deepOrange),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const OrderHistoryScreen()),
               );
             },
           ),

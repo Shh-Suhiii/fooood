@@ -59,5 +59,41 @@ def login():
     else:
         return jsonify({'status': 'fail', 'message': 'Invalid credentials'}), 401
 
+
+# Add order and cart history routes
+@app.route('/add-order', methods=['POST'])
+def add_order():
+    data = request.get_json()
+    items = data.get('items')
+    payment_method = data.get('paymentMethod')
+    address = data.get('address')
+    date = data.get('date')
+    status = data.get('status')
+    total = data.get('total')
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO orders (items, payment_method, address, date, status, total)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (str(items), payment_method, address, date, status, total))
+        conn.commit()
+        return jsonify({'status': 'success', 'message': 'Order saved'}), 200
+    except mysql.connector.Error as err:
+        return jsonify({'status': 'fail', 'message': str(err)}), 400
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/cart-history')
+def get_order_history():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM orders ORDER BY date DESC")
+    orders = cursor.fetchall()
+    conn.close()
+    return jsonify(orders)
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5002)
